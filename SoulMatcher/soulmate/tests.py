@@ -16,13 +16,15 @@ class BaseTestCase(APITestCase):
             self, username='testuser',
             email='test@example.com',
             password='testpassword',
-            email_confirmed=True):
+            email_confirmed=True,
+            email_confirmation_token='valid_token_1'):
 
         user = CustomUser.objects.create_user(
             username=username,
             email=email,
             password=password,
-            email_confirmed=email_confirmed
+            email_confirmed=email_confirmed,
+            email_confirmation_token=email_confirmation_token
         )
         return user
 
@@ -41,26 +43,75 @@ class UserSerializerTest(BaseTestCase):
         self.assertEqual(serializer.data['email'], self.user.email)
 
 
+class EmailConfirmationTestCase(BaseTestCase):
+
+    def setUp(self):
+        self.user_confirmed = self.create_user(
+            username='confirmed_user',
+            email='confirmed@example.com',
+            email_confirmed=True
+        )
+        self.user_confirmed.save()
+
+        self.user_unconfirmed = self.create_user(
+            username='unconfirmed_user',
+            email='unconfirmed@example.com',
+            email_confirmed=False,
+            email_confirmation_token='valid_token_2'
+        )
+        self.user_unconfirmed.save()
+
+    def get_email_confirmation_url(self, token):
+        return reverse('email-confirmation', kwargs={'token': token})
+
+    def test_email_already_confirmed(self):
+        url = self.get_email_confirmation_url('valid_token_1')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, {'error': 'Email already confirmed'})
+
+    def test_email_confirmation_successful(self):
+        url = self.get_email_confirmation_url('valid_token_2')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data, {'message': 'Email confirmed successfully'})
+
+        self.user_unconfirmed.refresh_from_db()
+        self.assertTrue(self.user_unconfirmed.email_confirmed)
+
+    def test_invalid_token(self):
+        url = self.get_email_confirmation_url('invalid_token')
+        response = self.client.get(url)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, {'error': 'Invalid token'})
+
+
 class AuthenticationTest(BaseTestCase):
 
     def setUp(self):
         self.user = self.create_user(email_confirmed=False)
 
     def test_authentication_with_unconfirmed_email(self):
-        response = self.client.post('/api/soulmate/token/', {
-            'username': 'testuser',
-            'password': 'testpassword'
-        })
+        response = self.client.post(
+            '/api/soulmate/token/',
+            {
+                'username': 'testuser',
+                'password': 'testpassword'
+            }
+        )
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_authentication_with_confirmed_email(self):
         self.user.email_confirmed = True
         self.user.save()
 
-        response = self.client.post('/api/soulmate/token/', {
-            'username': 'testuser',
-            'password': 'testpassword'
-        })
+        response = self.client.post(
+            '/api/soulmate/token/',
+            {
+                'username': 'testuser',
+                'password': 'testpassword'
+            }
+        )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertTrue('access' in response.json())
 
@@ -157,4 +208,3 @@ class PrioritiesTestCase(BaseTestCase):
         priority = self.create_priority_object()
         response = self.update_priority(priority.id, 'smoking', 'invalid', 12)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
