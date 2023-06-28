@@ -1,10 +1,17 @@
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.views import TokenRefreshView
 
-from django.urls import path
+from rest_framework.routers import DefaultRouter
+
+from django.urls import path, include
 
 from . import views
 
+
+router = DefaultRouter()
+router.register(r'priorities', views.PriorityViewSet, basename='Priorities')
+
 urlpatterns = [
+    path('', include(router.urls)),
     path('register/', views.register, name='register'),
     path('email-confirmation/<str:token>/', views.email_confirmation, name='email-confirmation'),
     path('token/', views.CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
