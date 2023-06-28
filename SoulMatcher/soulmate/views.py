@@ -2,14 +2,18 @@ import uuid
 
 from django.contrib.auth import get_user_model
 
-from rest_framework import status
+from rest_framework import status, viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from rest_framework_simplejwt.views import TokenObtainPairView as SimpleTokenObtainPairView
 
-from .serializers import UserSerializer, CustomTokenObtainPairSerializer
+from .models import Priority
+from .serializers import \
+    UserSerializer, \
+    CustomTokenObtainPairSerializer, \
+    PrioritySerializer
 from .email_sender import send_verification_email
 
 
@@ -52,3 +56,15 @@ def email_confirmation(request, token):
 @permission_classes([IsAuthenticated])
 def temp_protected_view(request):
     return Response({"message": "This is a protected view, you have access."})
+
+
+class PriorityViewSet(viewsets.ModelViewSet):
+    serializer_class = PrioritySerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return Priority.objects.filter(user=self.request.user)
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
+
