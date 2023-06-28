@@ -134,3 +134,10 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
 }
+
+SIMPLE_JWT = {
+    'DEFAULT_SERIALIZER_CLASSES': (
+        'soulmate.serializers.CustomTokenObtainPairSerializer',
+        'rest_framework_simplejwt.serializers.TokenRefreshSerializer',
+    ),
+}
