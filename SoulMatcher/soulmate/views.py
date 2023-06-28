@@ -5,10 +5,16 @@ from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 
-from .serializers import UserSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView as SimpleTokenObtainPairView
+
+from .serializers import UserSerializer, CustomTokenObtainPairSerializer
 from .email_sender import send_verification_email
+
+
+class CustomTokenObtainPairView(SimpleTokenObtainPairView):
+    serializer_class = CustomTokenObtainPairSerializer
 
 
 @api_view(['POST'])
@@ -40,3 +46,9 @@ def email_confirmation(request, token):
         return Response({'message': 'Email confirmed successfully'}, status=status.HTTP_200_OK)
     except get_user_model().DoesNotExist:
         return Response({'error': 'Invalid token'}, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def temp_protected_view(request):
+    return Response({"message": "This is a protected view, you have access."})
