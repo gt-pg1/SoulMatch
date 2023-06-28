@@ -76,116 +76,85 @@ class PrioritiesTestCase(BaseTestCase):
 
     def setUp(self):
         self.user = self.create_user()
-
         response = self.client.post(
             reverse('token_obtain_pair'),
             {'username': 'testuser', 'password': 'testpassword'}
         )
         self.token = response.data['access']
 
-    def test_create_priority(self):
-        url = reverse('Priorities-list')
-        data = {
-            'aspect': 'smoking',
-            'attitude': 'positive',
-            'weight': 8
-        }
+    def set_authorization(self):
         self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.token)
 
-        response = self.client.post(url, data)
+    def get_priority_url(self, priority_id):
+        return reverse('Priorities-detail', kwargs={'pk': priority_id})
+
+    def create_priority(self, aspect, attitude, weight):
+        url = reverse('Priorities-list')
+        data = {
+            'aspect': aspect,
+            'attitude': attitude,
+            'weight': weight
+        }
+        self.set_authorization()
+        return self.client.post(url, data)
+
+    def create_priority_object(self, aspect='smoking', attitude='positive', weight=8):
+        return Priority.objects.create(
+            user=self.user,
+            aspect=aspect,
+            attitude=attitude,
+            weight=weight
+        )
+
+    def update_priority(self, priority_id, aspect, attitude, weight):
+        url = self.get_priority_url(priority_id)
+        data = {
+            'aspect': aspect,
+            'attitude': attitude,
+            'weight': weight
+        }
+        self.set_authorization()
+        return self.client.put(url, data)
+
+    def delete_priority(self, priority_id):
+        url = self.get_priority_url(priority_id)
+        self.set_authorization()
+        return self.client.delete(url)
+
+    def test_create_priority(self):
+        response = self.create_priority('smoking', 'positive', 8)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
 
     def test_get_priorities(self):
         url = reverse('Priorities-list')
-        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.token)
-
+        self.set_authorization()
         response = self.client.get(url)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_update_priority(self):
-        priority = Priority.objects.create(
-            user=self.user1,
-            aspect='smoking',
-            attitude='positive',
-            weight=8
-        )
-
-        url = reverse('Priorities-detail', kwargs={'pk': priority.id})
-        data = {
-            'aspect': 'smoking',
-            'attitude': 'negative',
-            'weight': 10
-        }
-        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.token)
-
-        response = self.client.put(url, data)
+        priority = self.create_priority_object()
+        response = self.update_priority(priority.id, 'smoking', 'negative', 10)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_delete_priority(self):
-        priority = Priority.objects.create(
-            user=self.user1,
-            aspect='smoking',
-            attitude='positive',
-            weight=8
-        )
-
-        url = reverse('Priorities-detail', kwargs={'pk': priority.id})
-        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.token)
-
-        response = self.client.delete(url)
+        priority = self.create_priority_object()
+        response = self.delete_priority(priority.id)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
     def test_create_priority_invalid_aspect(self):
-        url = reverse('Priorities-list')
-        data = {
-            'aspect': 'x' * 101,
-            'attitude': 'negative',
-            'weight': 10
-        }
-        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.token)
-
-        response = self.client.post(url, data)
+        response = self.create_priority('x' * 101, 'negative', 10)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_create_priority_invalid_attitude(self):
-        url = reverse('Priorities-list')
-        data = {
-            'aspect': 'smoking',
-            'attitude': 'invalid',
-            'weight': 10
-        }
-        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.token)
-
-        response = self.client.post(url, data)
+        response = self.create_priority('smoking', 'invalid', 10)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_create_priority_invalid_weight(self):
-        url = reverse('Priorities-list')
-        data = {
-            'aspect': 'smoking',
-            'attitude': 'negative',
-            'weight': 12
-        }
-        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.token)
-
-        response = self.client.post(url, data)
+        response = self.create_priority('smoking', 'negative', 12)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_update_priority_invalid_data(self):
-        priority = Priority.objects.create(
-            user=self.user1,
-            aspect='smoking',
-            attitude='positive',
-            weight=8
-        )
-
-        url = reverse('Priorities-detail', kwargs={'pk': priority.id})
-        data = {
-            'aspect': 'smoking',
-            'attitude': 'invalid',
-            'weight': 12
-        }
-        self.client.credentials(HTTP_AUTHORIZATION='Bearer ' + self.token)
-
-        response = self.client.put(url, data)
+        priority = self.create_priority_object()
+        response = self.update_priority(priority.id, 'smoking', 'invalid', 12)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
