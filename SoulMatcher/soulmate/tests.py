@@ -1,6 +1,4 @@
 from django.urls import reverse
-from django.contrib.auth import get_user_model
-from django.test import TestCase
 
 from rest_framework.test import APITestCase
 from rest_framework import status
@@ -8,33 +6,45 @@ from rest_framework import status
 from .models import CustomUser, Priority
 from .serializers import UserSerializer
 
-User = get_user_model()
 
+class BaseTestCase(APITestCase):
 
-class UserSerializerTest(TestCase):
-    def test_user_serializer(self):
-        user = User.objects.create_user(
-            username='testuser',
+    def setUp(self):
+        pass
+
+    def create_user(
+            self, username='testuser',
             email='test@example.com',
-            password='testpassword'
+            password='testpassword',
+            email_confirmed=True):
+
+        user = CustomUser.objects.create_user(
+            username=username,
+            email=email,
+            password=password,
+            email_confirmed=email_confirmed
         )
-        serializer = UserSerializer(user)
+        return user
+
+
+class UserSerializerTest(BaseTestCase):
+
+    def setUp(self):
+        self.user = self.create_user()
+
+    def test_user_serializer(self):
+        serializer = UserSerializer(self.user)
 
         self.assertEqual(set(serializer.data.keys()), {'id', 'username', 'email'})
 
-        self.assertEqual(serializer.data['username'], user.username)
-        self.assertEqual(serializer.data['email'], user.email)
+        self.assertEqual(serializer.data['username'], self.user.username)
+        self.assertEqual(serializer.data['email'], self.user.email)
 
 
-class AuthenticationTest(APITestCase):
+class AuthenticationTest(BaseTestCase):
 
     def setUp(self):
-        self.user = CustomUser.objects.create_user(
-            email='test@example.com',
-            username='testuser',
-            password='testpassword',
-            email_confirmed=False
-        )
+        self.user = self.create_user(email_confirmed=False)
 
     def test_authentication_with_unconfirmed_email(self):
         response = self.client.post('/api/soulmate/token/', {
@@ -62,19 +72,14 @@ class AuthenticationTest(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
 
-class PrioritiesTestCase(APITestCase):
+class PrioritiesTestCase(BaseTestCase):
 
     def setUp(self):
-        self.user1 = CustomUser.objects.create_user(
-            username='testuser1',
-            email='testuser1@example.com',
-            password='testpassword',
-            email_confirmed=True
-        )
+        self.user = self.create_user()
 
         response = self.client.post(
             reverse('token_obtain_pair'),
-            {'username': 'testuser1', 'password': 'testpassword'}
+            {'username': 'testuser', 'password': 'testpassword'}
         )
         self.token = response.data['access']
 
