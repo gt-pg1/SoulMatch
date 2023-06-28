@@ -1,9 +1,10 @@
 from rest_framework import serializers
+
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
 from django.contrib.auth import get_user_model
 
-from .models import CustomUser
+from .models import CustomUser, Priority
 
 User = get_user_model()
 
@@ -34,3 +35,9 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             raise serializers.ValidationError("Email is not verified")
 
         return data
+
+
+class PrioritySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Priority
+        fields = ['id', 'aspect', 'attitude', 'weight']
