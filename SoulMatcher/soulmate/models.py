@@ -4,6 +4,7 @@ from django.contrib.auth.models import AbstractUser
 
 class CustomUser(AbstractUser):
     email_confirmed = models.BooleanField(default=False)
+    email_confirmation_token = models.CharField(max_length=36, null=True, blank=True)
 
     def __str__(self):
         return self.username
