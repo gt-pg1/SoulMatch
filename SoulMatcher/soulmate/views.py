@@ -20,8 +20,8 @@ def register(request):
             user = serializer.save()
             confirmation_token = str(uuid.uuid4())
             user.email_confirmation_token = confirmation_token
-            send_verification_email(request, user, confirmation_token)
             user.save()
+            send_verification_email(request, user, confirmation_token)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
