@@ -51,14 +51,25 @@ class PrioritySerializer(serializers.ModelSerializer):
         fields = ['id', 'aspect', 'attitude', 'weight', 'display_aspect', 'display_attitude', 'display_weight']
 
     def validate_aspect(self, value):
+        if len(value) > 100:
+            raise serializers.ValidationError("Invalid aspect value, max len 100 symbols")
+
         aspect, created = Aspect.objects.get_or_create(aspect=value)
         return aspect
 
     def validate_attitude(self, value):
+        ALLOWED_ATTITUDES = {'positive', 'negative'}
+
+        if value not in ALLOWED_ATTITUDES:
+            raise serializers.ValidationError("Invalid attitude value")
+
         attitude, created = Attitude.objects.get_or_create(attitude=value)
         return attitude
 
     def validate_weight(self, value):
+        if not 1 <= value <= 10:
+            raise serializers.ValidationError("Weight must be between 1 and 10")
+        
         weight, created = Weight.objects.get_or_create(weight=value)
         return weight
 

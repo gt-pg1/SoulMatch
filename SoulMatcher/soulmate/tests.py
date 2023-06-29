@@ -3,7 +3,7 @@ from django.urls import reverse
 from rest_framework.test import APITestCase
 from rest_framework import status
 
-from .models import CustomUser, Priority
+from .models import CustomUser, Priority, Aspect, Attitude, Weight
 from .serializers import UserSerializer
 
 
@@ -150,12 +150,20 @@ class PrioritiesTestCase(BaseTestCase):
         return self.client.post(url, data)
 
     def create_priority_object(self, aspect='smoking', attitude='positive', weight=8):
-        return Priority.objects.create(
-            user=self.user,
-            aspect=aspect,
-            attitude=attitude,
-            weight=weight
+        aspect_instance, _ = Aspect.objects.get_or_create(aspect=aspect)
+        attitude_instance, _ = Attitude.objects.get_or_create(attitude=attitude)
+        weight_instance, _ = Weight.objects.get_or_create(weight=weight)
+
+        # Создание объекта Priority без указания пользователя
+        priority = Priority.objects.create(
+            aspect=aspect_instance,
+            attitude=attitude_instance,
+            weight=weight_instance
         )
+        # Связывание объекта Priority с пользователем
+        priority.users.add(self.user)
+
+        return priority
 
     def update_priority(self, priority_id, aspect, attitude, weight):
         url = self.get_priority_url(priority_id)
@@ -166,6 +174,11 @@ class PrioritiesTestCase(BaseTestCase):
         }
         self.set_authorization()
         return self.client.put(url, data)
+
+    def patch_priority(self, priority_id, data):
+        url = self.get_priority_url(priority_id)
+        self.set_authorization()
+        return self.client.patch(url, data)
 
     def delete_priority(self, priority_id):
         url = self.get_priority_url(priority_id)
@@ -185,6 +198,11 @@ class PrioritiesTestCase(BaseTestCase):
     def test_update_priority(self):
         priority = self.create_priority_object()
         response = self.update_priority(priority.id, 'smoking', 'negative', 10)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+
+    def test_patch_priority(self):
+        priority = self.create_priority_object()
+        response = self.patch_priority(priority.id, {'weight': 7})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
     def test_delete_priority(self):
