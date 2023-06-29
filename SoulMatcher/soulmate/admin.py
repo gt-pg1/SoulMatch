@@ -1,18 +1,35 @@
 from django.contrib import admin
-from .models import CustomUser, Priority
+from .models import CustomUser, Aspect, Attitude, Weight, Priority
 
 
 @admin.register(CustomUser)
 class CustomUserAdmin(admin.ModelAdmin):
-    list_display = ['username', 'email', 'email_confirmed']
-    list_filter = ['email_confirmed']
-    search_fields = ['username', 'email']
-    # Дополнительные настройки админки для CustomUser
+    list_display = ('username', 'email', 'email_confirmed')
+    list_filter = ('email_confirmed',)
+    search_fields = ('username', 'email')
+
+
+@admin.register(Aspect)
+class AspectAdmin(admin.ModelAdmin):
+    list_display = ('aspect',)
+    search_fields = ('aspect',)
+
+
+@admin.register(Attitude)
+class AttitudeAdmin(admin.ModelAdmin):
+    list_display = ('attitude',)
+    search_fields = ('attitude',)
+
+
+@admin.register(Weight)
+class WeightAdmin(admin.ModelAdmin):
+    list_display = ('weight',)
+    search_fields = ('weight',)
 
 
 @admin.register(Priority)
 class PriorityAdmin(admin.ModelAdmin):
-    list_display = ['aspect', 'attitude', 'weight', 'user']
-    list_filter = ['aspect', 'attitude']
-    search_fields = ['aspect', 'attitude', 'user__username']
-    # Дополнительные настройки админки для Priority
+    list_display = ('aspect', 'attitude', 'weight')
+    list_filter = ('aspect', 'attitude', 'weight')
+    search_fields = ('aspect__aspect', 'attitude__attitude', 'weight__weight')
+    filter_horizontal = ('users',)
