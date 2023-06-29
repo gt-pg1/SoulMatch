@@ -17,4 +17,5 @@ urlpatterns = [
     path('token/', views.CustomTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('temp_protected_view/', views.temp_protected_view, name='temp_protected_view'),
+    path('compatible-users/<int:user_id>/', views.CompatibleUsersView.as_view(), name='compatible-users'),
 ]
