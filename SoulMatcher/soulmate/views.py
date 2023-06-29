@@ -1,9 +1,7 @@
 import uuid
 from collections import defaultdict
-from datetime import datetime
 
 from django.contrib.auth import get_user_model
-from django.db.models import Prefetch
 from django.shortcuts import get_object_or_404
 
 from rest_framework import status, viewsets, views
@@ -21,10 +19,6 @@ from .serializers import \
     CustomTokenObtainPairSerializer, \
     PrioritySerializer
 from .email_sender import send_verification_email
-
-
-
-
 
 
 class CustomTokenObtainPairView(SimpleTokenObtainPairView):

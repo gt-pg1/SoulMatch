@@ -69,7 +69,7 @@ class PrioritySerializer(serializers.ModelSerializer):
     def validate_weight(self, value):
         if not 1 <= value <= 10:
             raise serializers.ValidationError("Weight must be between 1 and 10")
-        
+
         weight, created = Weight.objects.get_or_create(weight=value)
         return weight
 

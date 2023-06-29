@@ -18,7 +18,6 @@ class BaseTestCase(APITestCase):
             password='testpassword',
             email_confirmed=True,
             email_confirmation_token='valid_token_1'):
-
         user = CustomUser.objects.create_user(
             username=username,
             email=email,
