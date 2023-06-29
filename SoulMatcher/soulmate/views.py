@@ -82,60 +82,95 @@ class PriorityViewSet(viewsets.ModelViewSet):
 
 
 class CompatibleUsersView(views.APIView):
+    """
+    Представление для получения списка совместимых пользователей на основе приоритетов.
+    """
 
     def get_user_vector(self, user_id):
+        """
+        Получает вектор приоритетов для заданного пользователя.
+
+        :param user_id: ID пользователя
+        :return: Кортеж, содержащий вектор приоритетов, индексы аспектов и ID аспектов пользователя
+        """
         user = get_object_or_404(CustomUser, id=user_id)
         priorities = Priority.objects.filter(users=user)
+
         aspect_indices = {aspect.id: i for i, aspect in enumerate(Aspect.objects.all())}
+
         user_aspect_ids = [priority.aspect.id for priority in priorities]
         user_vector = [0] * len(aspect_indices)
+
         for priority in priorities:
             index = aspect_indices[priority.aspect.id]
-            user_vector[
-                index] = priority.weight.weight if priority.attitude.attitude == 'positive' else -priority.weight.weight
+
+            weight = priority.weight.weight
+            attitude = priority.attitude.attitude
+            user_vector[index] = weight if attitude == 'positive' else -weight
+
         return user_vector, aspect_indices, user_aspect_ids
 
     def get(self, request, user_id):
+        """
+        Обрабатывает GET-запросы на получение списка совместимых пользователей.
+
+        :param request: Объект запроса
+        :param user_id: ID пользователя, для которого необходимо найти совместимых пользователей
+        :return: Список совместимых пользователей
+        """
         user_vector, aspect_indices, user_aspect_ids = self.get_user_vector(user_id)
 
         if not any(user_vector):
             return Response({"error": "User does not have any priorities."}, status=status.HTTP_400_BAD_REQUEST)
 
-        test = Priority.objects.filter(aspect__id__in=user_aspect_ids)
+        relevant_user_ids = Priority.objects.filter(
+            aspect__id__in=user_aspect_ids
+        ).values_list(
+            'users__id', flat=True
+        ).distinct()
 
-        # Получаем ID пользователей, которые имеют приоритеты по тем же аспектам
-        relevant_user_ids = Priority.objects.filter(aspect__id__in=user_aspect_ids).exclude(
-            users__id=user_id).values_list('users__id', flat=True).distinct()
+        relevant_user_ids = list(relevant_user_ids)
+        if user_id in relevant_user_ids:
+            relevant_user_ids.remove(user_id)
 
-        # Получаем приоритеты этих пользователей
-        all_priorities = Priority.objects.filter(users__id__in=relevant_user_ids).values(
-            'users__id', 'aspect__id', 'weight__weight', 'attitude__attitude')
+        all_priorities = Priority.objects.filter(
+            users__id__in=relevant_user_ids
+        ).values(
+            'users__id', 'aspect__id', 'weight__weight', 'attitude__attitude'
+        )
 
         vectors = defaultdict(lambda: [0] * len(aspect_indices))
 
-        counter = 0
-        x = datetime.now()
-        print(f'{x} Начало итерации цикла')
         for priority in all_priorities:
             user_id = priority['users__id']
             aspect_id = priority['aspect__id']
             weight = priority['weight__weight']
             attitude = priority['attitude__attitude']
+
             index = aspect_indices[aspect_id]
             vectors[user_id][index] = weight if attitude == 'positive' else -weight
 
-            counter += 1
-            print(f'{datetime.now()} Итерация {counter}, время итерирования {datetime.now() - x}')
-
-        print(f'{datetime.now()} Конец итерации циклов, время итерирования {datetime.now() - x}')
-
         similarities = cosine_similarity([user_vector], list(vectors.values()))[0]
         compatible_users = [
-            (user_id, (similarity + 1) / 2 * 100)
-            for user_id, similarity in zip(vectors.keys(), similarities) if (similarity + 1) / 2 * 100 > 75
+            {
+                'user_id': user_id,
+                'name': self.get_user_name(user_id),
+                'compatibility_percentage': (similarity + 1) / 2 * 100
+            }
+            for user_id, similarity in zip(vectors.keys(), similarities)
+            if (similarity + 1) / 2 * 100 > 75
         ]
-        compatible_users = sorted(compatible_users, key=lambda x: x[1], reverse=True)
+        compatible_users = sorted(compatible_users, key=lambda x: x['compatibility_percentage'], reverse=True)
 
-        top_20_compatible_users = compatible_users[:20]
+        return Response({"compatible_users": compatible_users[:20]}, status=status.HTTP_200_OK)
 
-        return Response({"compatible_users": top_20_compatible_users}, status=status.HTTP_200_OK)
+    @staticmethod
+    def get_user_name(user_id):
+        """
+        Возвращает имя пользователя по его ID. Если first_name и last_name отсутствуют, возвращает username.
+
+        :param user_id: ID пользователя
+        :return: Имя пользователя
+        """
+        user = CustomUser.objects.get(id=user_id)
+        return f"{user.first_name} {user.last_name}".strip() or user.username
