@@ -27,7 +27,7 @@ def import_data_from_json(file_name):
             surname, firstname = name.split(' ')
             latin_surname = re.sub(r'[^a-zA-Z0-9.@]', '', transliterate.translit(surname, reversed=True).lower())
             latin_firstname = re.sub(r'[^a-zA-Z0-9.@]', '', transliterate.translit(firstname, reversed=True).lower())
-            username = f"{latin_surname}{latin_firstname}{100000 + index}"
+            username = f"{latin_surname}.{latin_firstname}{100000 + index}"
             email = f"{username}@test.com"
 
             user = CustomUser(
@@ -69,8 +69,10 @@ def import_data_from_json(file_name):
         tqdm.write("Writing priorities to DB...")
         progress_bar = tqdm(total=len(priority_relations), desc="Writing priorities to DB", leave=False)
         for user, aspect, attitude, weight in priority_relations:
-            priority = Priority.objects.create(aspect=aspect, attitude=attitude, weight=weight)
+            priority, created = Priority.objects.get_or_create(aspect=aspect, attitude=attitude, weight=weight)
+
             priority.users.add(user)
+
             progress_bar.update(1)
         progress_bar.close()
 
