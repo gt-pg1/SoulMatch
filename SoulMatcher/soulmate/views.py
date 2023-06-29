@@ -2,14 +2,14 @@ import uuid
 
 from django.contrib.auth import get_user_model
 
-from rest_framework import status, viewsets
+from rest_framework import status, viewsets, views
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 
 from rest_framework_simplejwt.views import TokenObtainPairView as SimpleTokenObtainPairView
 
-from .models import Priority
+from .models import Priority, CustomUser
 from .serializers import \
     UserSerializer, \
     CustomTokenObtainPairSerializer, \
@@ -63,8 +63,9 @@ class PriorityViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Priority.objects.filter(user=self.request.user)
+        user = self.request.user
+        return Priority.objects.filter(users__in=[user])
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
-
+        priority = serializer.save()
+        priority.users.add(self.request.user)
