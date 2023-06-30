@@ -144,6 +144,9 @@ class CompatibleUsersView(views.APIView):
             index = aspect_indices[aspect_id]
             vectors[user_id][index] = weight if attitude == 'positive' else -weight
 
+        if not vectors:
+            return Response({"compatible_users": []}, status=status.HTTP_200_OK)
+
         similarities = cosine_similarity([user_vector], list(vectors.values()))[0]
         compatible_users = [
             {
@@ -152,7 +155,7 @@ class CompatibleUsersView(views.APIView):
                 'compatibility_percentage': (similarity + 1) / 2 * 100
             }
             for user_id, similarity in zip(vectors.keys(), similarities)
-            if (similarity + 1) / 2 * 100 > 75
+            if (similarity + 1) / 2 * 100 >= 75
         ]
         compatible_users = sorted(compatible_users, key=lambda x: x['compatibility_percentage'], reverse=True)
 
