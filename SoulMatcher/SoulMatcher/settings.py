@@ -143,3 +143,12 @@ SIMPLE_JWT = {
     ),
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
 }
+
+# settings.py
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
+        'LOCATION': '/home/ilyak/PycharmProjects/SoulMatch/SoulMatcher/soulmate/cache',
+    }
+}
+
