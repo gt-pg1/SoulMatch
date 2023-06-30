@@ -7,5 +7,8 @@ def send_verification_email(request, user, token):
     subject = 'Подтвердите свой аккаунт'
     base_url = f'{request.scheme}://{request.get_host()}'
     confirmation_url = base_url + reverse('email-confirmation', args=[token])
-    message = f'Пожалуйста, подтвердите свой аккаунт, перейдя по ссылке: {confirmation_url}'
+
+    text = 'Пожалуйста, подтвердите свой аккаунт, перейдя по ссылке'
+    message = f'{text}: {confirmation_url}'
+
     send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [user.email])

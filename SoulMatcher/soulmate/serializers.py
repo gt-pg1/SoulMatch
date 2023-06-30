@@ -14,17 +14,21 @@ class UserSerializer(serializers.ModelSerializer):
     Сериализатор для модели User.
 
     Fields:
-        - id: ID пользователя
+        - id:       ID пользователя
         - username: Имя пользователя
-        - email: Email пользователя
+        - email:    Email пользователя
         - password: Пароль пользователя
 
     Parameters:
-        - password: Параметр write_only, обозначает, что поле пароля не будет возвращаться в сериализованных данных
+        - password: Параметр write_only, обозначает,
+                    что поле пароля не будет возвращаться
+                    в сериализованных данных
 
     Methods:
-        - create: Создает нового пользователя и обеспечивает хэширование его пароля
+        - create:   Создает нового пользователя
+                    и обеспечивает хэширование его пароля
     """
+
     class Meta:
         model = User
         fields = ('id', 'username', 'email', 'password')
@@ -35,7 +39,8 @@ class UserSerializer(serializers.ModelSerializer):
         Создает нового пользователя с хэшированным паролем.
 
         Args:
-            validated_data: Валидированные данные, содержащие информацию о пользователе.
+            validated_data: Валидированные данные,
+                            содержащие информацию о пользователе.
 
         Returns:
             Созданный объект пользователя.
@@ -53,11 +58,14 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
     Персонализированный сериализатор для получения токена.
 
     Methods:
-        - validate: Проверяет валидность данных и дополнительные условия для получения токена.
+        - validate: Проверяет валидность данных
+                    и дополнительные условия для получения токена.
     """
+
     def validate(self, attrs):
         """
-        Проверяет валидность данных и дополнительные условия для получения токена.
+        Проверяет валидность данных
+        и дополнительные условия для получения токена.
 
         Args:
             attrs: Атрибуты с данными для получения токена.
@@ -66,7 +74,8 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
             Валидированные данные для получения токена.
 
         Raises:
-            serializers.ValidationError: Если email пользователя не подтвержден.
+            serializers.ValidationError: Если email пользователя
+                                         не подтвержден.
         """
         data = super().validate(attrs)
         user = CustomUser.objects.get(username=attrs['username'])
@@ -82,37 +91,57 @@ class PrioritySerializer(serializers.ModelSerializer):
     Сериализатор для модели Priority.
 
     Fields:
-        - id: ID приоритета
-        - aspect: Аспект приоритета (write_only)
-        - attitude: Отношение к приоритету (write_only)
-        - weight: Вес приоритета (write_only)
-        - display_aspect: Отображаемое значение аспекта (read_only)
-        - display_attitude: Отображаемое значение отношения (read_only)
-        - display_weight: Отображаемое значение веса (read_only)
+        - id:                ID приоритета
+        - aspect:            Аспект приоритета (write_only)
+        - attitude:          Отношение к приоритету (write_only)
+        - weight:            Вес приоритета (write_only)
+        - display_aspect:    Отображаемое значение аспекта (read_only)
+        - display_attitude:  Отображаемое значение отношения (read_only)
+        - display_weight:    Отображаемое значение веса (read_only)
 
     Parameters:
-        - aspect: Параметр write_only, обозначает аспект приоритета
-        - attitude: Параметр write_only, обозначает отношение к приоритету
-        - weight: Параметр write_only, обозначает вес приоритета
+        - aspect:            Параметр write_only,
+                             обозначает аспект приоритета
+        - attitude:          Параметр write_only,
+                             обозначает отношение к приоритету
+        - weight:            Параметр write_only,
+                             обозначает вес приоритета
 
     Methods:
-        - validate_aspect: Проверяет валидность аспекта и возвращает объект Aspect
-        - validate_attitude: Проверяет валидность отношения и возвращает объект Attitude
-        - validate_weight: Проверяет валидность веса и возвращает объект Weight
-        - create: Создает новый приоритет
-        - update: Обновляет существующий приоритет
+        - validate_aspect:   Проверяет валидность аспекта
+                             и возвращает объект Aspect
+        - validate_attitude: Проверяет валидность отношения
+                             и возвращает объект Attitude
+        - validate_weight:   Проверяет валидность веса
+                             и возвращает объект Weight
+        - create:            Создает новый приоритет
+        - update:            Обновляет существующий приоритет
     """
     aspect = serializers.CharField(write_only=True)
     attitude = serializers.CharField(write_only=True)
     weight = serializers.IntegerField(write_only=True)
 
-    display_aspect = serializers.StringRelatedField(source='aspect.aspect', read_only=True)
-    display_attitude = serializers.StringRelatedField(source='attitude.attitude', read_only=True)
-    display_weight = serializers.StringRelatedField(source='weight.weight', read_only=True)
+    display_aspect = serializers.StringRelatedField(
+        source='aspect.aspect', read_only=True
+    )
+    display_attitude = serializers.StringRelatedField(
+        source='attitude.attitude', read_only=True
+    )
+    display_weight = serializers.StringRelatedField(
+        source='weight.weight', read_only=True
+    )
 
     class Meta:
         model = Priority
-        fields = ['id', 'aspect', 'attitude', 'weight', 'display_aspect', 'display_attitude', 'display_weight']
+        fields = [
+            'id',
+            'aspect',
+            'attitude',
+            'weight',
+            'display_aspect',
+            'display_attitude',
+            'display_weight'
+        ]
 
     def validate_aspect(self, value):
         """
@@ -128,7 +157,9 @@ class PrioritySerializer(serializers.ModelSerializer):
             serializers.ValidationError: Если значение аспекта некорректно.
         """
         if len(value) > 100:
-            raise serializers.ValidationError("Некорректное значение аспекта, максимальная длина 100 символов")
+            raise serializers.ValidationError(
+                "Максимальная длина аспекта 100 символов"
+            )
 
         aspect, created = Aspect.objects.get_or_create(aspect=value)
         return aspect
@@ -149,7 +180,9 @@ class PrioritySerializer(serializers.ModelSerializer):
         ALLOWED_ATTITUDES = {'positive', 'negative'}
 
         if value not in ALLOWED_ATTITUDES:
-            raise serializers.ValidationError("Некорректное значение отношения")
+            raise serializers.ValidationError(
+                "Некорректное значение отношения"
+            )
 
         attitude, created = Attitude.objects.get_or_create(attitude=value)
         return attitude
@@ -168,7 +201,9 @@ class PrioritySerializer(serializers.ModelSerializer):
             serializers.ValidationError: Если значение веса некорректно.
         """
         if not 1 <= value <= 10:
-            raise serializers.ValidationError("Вес должен быть в диапазоне от 1 до 10")
+            raise serializers.ValidationError(
+                "Вес должен быть в диапазоне от 1 до 10"
+            )
 
         weight, created = Weight.objects.get_or_create(weight=value)
         return weight
@@ -178,7 +213,8 @@ class PrioritySerializer(serializers.ModelSerializer):
         Создает новый приоритет.
 
         Args:
-            validated_data: Валидированные данные, содержащие информацию о приоритете.
+            validated_data: Валидированные данные,
+                            содержащие информацию о приоритете.
 
         Returns:
             Созданный объект приоритета.
@@ -200,8 +236,9 @@ class PrioritySerializer(serializers.ModelSerializer):
         Обновляет существующий приоритет.
 
         Args:
-            instance: Существующий объект приоритета.
-            validated_data: Валидированные данные, содержащие информацию для обновления.
+            instance:       Существующий объект приоритета.
+            validated_data: Валидированные данные,
+                            содержащие информацию для обновления.
 
         Returns:
             Обновленный объект приоритета.

@@ -5,7 +5,11 @@ from django.contrib.auth.models import AbstractUser
 class CustomUser(AbstractUser):
     email = models.EmailField(blank=True, unique=True)
     email_confirmed = models.BooleanField(default=False)
-    email_confirmation_token = models.CharField(max_length=36, null=True, blank=True)
+    email_confirmation_token = models.CharField(
+        max_length=36,
+        null=True,
+        blank=True
+    )
 
     def __str__(self):
         return self.username
@@ -32,7 +36,9 @@ class Attitude(models.Model):
 
 
 class Weight(models.Model):
-    weight = models.PositiveIntegerField(choices=[(i, str(i)) for i in range(1, 11)])
+    weight = models.PositiveIntegerField(
+        choices=[(i, str(i)) for i in range(1, 11)]
+    )
 
     def __str__(self):
         return str(self.weight)
