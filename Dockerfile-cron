@@ -1,0 +1,19 @@
+FROM python:3.10-slim-buster
+
+WORKDIR /app
+
+ENV PYTHONDONTWRITEBYTECODE 1
+ENV PYTHONUNBUFFERED 1
+
+RUN apt-get update && apt-get install -y cron
+
+# Сделать cron выводить логи на стандартный вывод
+RUN touch /var/log/cron.log
+RUN echo 'CRON_TTY=pts/0' >> /etc/environment
+
+COPY cronjobs /etc/cron.d/cronjobs
+RUN chmod 0644 /etc/cron.d/cronjobs
+RUN crontab /etc/cron.d/cronjobs
+
+# Запустить cron вместе с логами
+CMD cron && tail -f /var/log/cron.log

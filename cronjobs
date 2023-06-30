@@ -1,0 +1,1 @@
+* * * * * cd /app/SoulMatcher && python manage.py send_mails

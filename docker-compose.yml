@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  web:
+    build: .
+    volumes:
+      - .:/app
+      - cache-data:/app/SoulMatcher/soulmate/cache
+      - db-data:/app/SoulMatcher
+    ports:
+      - "8000:8000"
+    deploy:
+      resources:
+        limits:
+          cpus: '4.0'
+          memory: 8192M
+    depends_on:
+      - cron
+  cron:
+    build:
+      context: .
+      dockerfile: Dockerfile-cron
+    volumes:
+      - .:/app
+
+volumes:
+  cache-data:
+  db-data:
+
