@@ -26,7 +26,9 @@ SECRET_KEY = 'django-insecure-51tq!id%ui$*c%)#_#7-az(8lhoz&o+^6wy#qb4)s*cqht$0q1
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    "0.0.0.0"
+]
 
 
 # Application definition
@@ -144,11 +146,10 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(hours=1),
 }
 
-# settings.py
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.filebased.FileBasedCache',
-        'LOCATION': '/home/ilyak/PycharmProjects/SoulMatch/SoulMatcher/soulmate/cache',
+        'LOCATION': '/soulmate/cache',
     }
 }
 
