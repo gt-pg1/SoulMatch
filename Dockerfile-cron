@@ -1,13 +1,10 @@
-FROM ubuntu:20.04
+FROM python:3.10-slim
 
-# Отключаем запросы пользовательского ввода во время сборки образа
-ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y cron
+
+WORKDIR /app
 
 COPY cronjobs /etc/cron.d/cronjobs
-
-RUN chmod 0644 /etc/cron.d/cronjobs && \
-    touch /var/log/cron.log && \
-    apt-get update && \
-    apt-get -y install cron
-
+RUN chmod 0644 /etc/cron.d/cronjobs
+RUN touch /var/log/cron.log
 CMD cron && tail -f /var/log/cron.log
